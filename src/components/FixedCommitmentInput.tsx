@@ -144,18 +144,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
         endDate: ''
       }
     });
-    setSmartFormData({
-      preferredSessionDuration: 60,
-      preferredDays: [],
-      preferredTimeRanges: [{
-        start: formatHour(settings.studyWindowStartHour),
-        end: formatHour(settings.studyWindowEndHour)
-      }],
-      allowTimeShifting: true,
-      priorityLevel: 'standard'
-    });
-    setSuggestedSessions([]);
-    setShowPreview(false);
     setIsOpen(false);
   };
 
