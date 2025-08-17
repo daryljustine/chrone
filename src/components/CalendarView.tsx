@@ -647,28 +647,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         return;
       }
 
-      const targetDate = moment(start).format('YYYY-MM-DD');
       const newStartTime = moment(start).format('HH:mm');
       const newEndTime = moment(end).format('HH:mm');
 
-      // Create a modified occurrence for this commitment
-      const updatedCommitment = { ...commitment };
-      if (!updatedCommitment.modifiedOccurrences) {
-        updatedCommitment.modifiedOccurrences = {};
-      }
-
-      updatedCommitment.modifiedOccurrences[targetDate] = {
-        startTime: newStartTime,
-        endTime: newEndTime,
-        title: commitment.title,
-        isAllDay: false
-      };
-
-      // Call the onDeleteFixedCommitment to trigger an update
-      // Note: This is a simplified approach - in a real implementation,
-      // you'd want a dedicated onUpdateCommitment callback
-      setDragFeedback(`Commitment moved to ${newStartTime} - ${newEndTime}`);
-      setTimeout(() => setDragFeedback(''), 3000);
+      // For now, just show feedback that the commitment would be moved
+      // In a full implementation, this would need a proper callback to update the commitment
+      setDragFeedback(`Commitment "${commitment.title}" would move to ${newStartTime} - ${newEndTime}. Edit the commitment to change its time.`);
+      setTimeout(() => setDragFeedback(''), 4000);
       return;
     }
 
@@ -953,7 +938,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         } else if (categoryLower.includes('finance') || categoryLower.includes('money') || categoryLower.includes('budget')) {
           return '💰';
         } else if (categoryLower.includes('home') || categoryLower.includes('house') || categoryLower.includes('family')) {
-          return '��';
+          return '🏠';
         } else if (categoryLower.includes('personal') || categoryLower.includes('life')) {
           return '👤';
         } else {
