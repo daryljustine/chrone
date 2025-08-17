@@ -998,12 +998,10 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                 className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4 mb-3 cursor-pointer hover:shadow-md transition-all duration-200"
                 onClick={() => {
                   if (onSelectCommitment) {
-                    onSelectCommitment(
-                      commitment.type === 'fixed'
-                        ? fixedCommitments.find(c => c.id === commitment.id)!
-                        : smartCommitments.find(c => c.id.startsWith(commitment.id.split('-')[0]))!,
-                      commitment.duration
-                    );
+                    const fixedCommitment = fixedCommitments.find(c => c.id === commitment.id);
+                    if (fixedCommitment) {
+                      onSelectCommitment(fixedCommitment, commitment.duration);
+                    }
                   }
                 }}
               >
