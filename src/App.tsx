@@ -936,64 +936,6 @@ function App() {
         }
     };
 
-    const handleUpdateSmartCommitment = (commitmentId: string, updates: Partial<SmartCommitment>) => {
-        setSmartCommitments(prev => prev.map(c => {
-            if (c.id === commitmentId) {
-                const updatedCommitment = { ...c, ...updates };
-
-                // Regenerate schedule if any scheduling-related properties were updated
-                const needsScheduleRegeneration =
-                    updates.totalHoursPerWeek !== undefined ||
-                    updates.preferredDays !== undefined ||
-                    updates.preferredTimeRanges !== undefined ||
-                    updates.sessionDurationRange !== undefined ||
-                    updates.allowTimeShifting !== undefined ||
-                    updates.priorityLevel !== undefined ||
-                    updates.dateRange !== undefined;
-
-                if (needsScheduleRegeneration) {
-                    try {
-                        const newSessions = generateSmartCommitmentSchedule(
-                            {
-                                title: updatedCommitment.title,
-                                category: updatedCommitment.category,
-                                location: updatedCommitment.location,
-                                description: updatedCommitment.description,
-                                totalHoursPerWeek: updatedCommitment.totalHoursPerWeek,
-                                preferredDays: updatedCommitment.preferredDays,
-                                preferredTimeRanges: updatedCommitment.preferredTimeRanges,
-                                sessionDurationRange: updatedCommitment.sessionDurationRange,
-                                allowTimeShifting: updatedCommitment.allowTimeShifting,
-                                priorityLevel: updatedCommitment.priorityLevel,
-                                dateRange: updatedCommitment.dateRange,
-                                countsTowardDailyHours: updatedCommitment.countsTowardDailyHours
-                            },
-                            settings,
-                            [...fixedCommitments, ...smartCommitments.filter(sc => sc.id !== commitmentId)],
-                            studyPlans
-                        );
-
-                        return {
-                            ...updatedCommitment,
-                            suggestedSessions: newSessions,
-                            isConfirmed: false,
-                            // Preserve existing manual overrides
-                            manualOverrides: c.manualOverrides
-                        };
-                    } catch (error) {
-                        console.warn('Failed to regenerate smart commitment schedule:', error);
-                        return { ...updatedCommitment, isConfirmed: false };
-                    }
-                } else {
-                    // If only non-scheduling properties were updated (like title, description)
-                    return { ...updatedCommitment, isConfirmed: false };
-                }
-            }
-            return c;
-        }));
-        setLastPlanStaleReason("commitment");
-        setIsPlanStale(true);
-    };
 
     const handleDeleteCommitment = async (commitmentId: string) => {
         // Check if it's a smart commitment first
