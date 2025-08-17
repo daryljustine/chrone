@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, TrendingUp, AlertTriangle, CheckCircle, Lightbulb, X, CheckCircle2, Clock3, Brain, Settings } from 'lucide-react';
-import { StudyPlan, Task, StudySession, FixedCommitment, SmartCommitment, UserSettings } from '../types';
+import { StudyPlan, Task, StudySession, FixedCommitment, UserSettings } from '../types';
 import { formatTime, generateSmartSuggestions, getLocalDateString, checkSessionStatus, moveIndividualSession, isTaskDeadlinePast } from '../utils/scheduling';
 
 interface StudyPlanViewProps {
   studyPlans: StudyPlan[];
   tasks: Task[];
   fixedCommitments: FixedCommitment[];
-  smartCommitments: SmartCommitment[];
   onSelectTask: (task: Task, session?: { allocatedHours: number; planDate?: string; sessionNumber?: number }) => void;
-  onSelectCommitment?: (commitment: FixedCommitment | SmartCommitment, duration: number) => void;
+  onSelectCommitment?: (commitment: FixedCommitment, duration: number) => void;
   onGenerateStudyPlan: () => void;
   onUndoSessionDone: (planDate: string, taskId: string, sessionNumber: number) => void;
   onSkipSession: (planDate: string, taskId: string, sessionNumber: number) => void; // NEW PROP for skipping sessions
