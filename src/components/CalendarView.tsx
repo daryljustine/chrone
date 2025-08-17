@@ -6,7 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import { StudyPlan, FixedCommitment, SmartCommitment, Task, StudySession, UserSettings } from '../types';
+import { StudyPlan, FixedCommitment, Task, StudySession, UserSettings } from '../types';
 import { BookOpen, Clock, Settings, X, Calendar as CalendarIcon, Brain } from 'lucide-react';
 import { checkSessionStatus, doesCommitmentApplyToDate } from '../utils/scheduling';
 import { getLocalDateString } from '../utils/scheduling';
@@ -18,11 +18,10 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 interface CalendarViewProps {
   studyPlans: StudyPlan[];
   fixedCommitments: FixedCommitment[];
-  smartCommitments?: SmartCommitment[];
   tasks: Task[];
   settings?: UserSettings;
   onSelectTask?: (task: Task, session?: { allocatedHours: number; planDate?: string; sessionNumber?: number }) => void;
-  onSelectCommitment?: (commitment: FixedCommitment | SmartCommitment, duration: number) => void;
+  onSelectCommitment?: (commitment: FixedCommitment, duration: number) => void;
   onStartManualSession?: (commitment: FixedCommitment, durationSeconds: number) => void;
   onDeleteFixedCommitment?: (commitmentId: string) => void;
   onUpdateStudyPlans?: (updatedPlans: StudyPlan[]) => void;
@@ -35,12 +34,10 @@ interface CalendarEvent {
   end: Date;
   allDay?: boolean;
   resource: {
-    type: 'study' | 'commitment' | 'smart-commitment';
-    data: StudySession | FixedCommitment | SmartCommitment;
+    type: 'study' | 'commitment';
+    data: StudySession | FixedCommitment;
     taskId?: string;
     planDate?: string; // For study sessions, which plan date they belong to
-    commitmentType?: 'fixed' | 'smart';
-    isPattern?: boolean; // For smart commitments, indicates this is part of a recurring pattern
   };
 }
 
