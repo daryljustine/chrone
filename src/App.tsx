@@ -513,8 +513,6 @@ function App() {
             setTasks(initialTasks);
             setSettings(initialSettings);
             setFixedCommitments(initialCommitments);
-            const initialSmartCommitments = JSON.parse(localStorage.getItem('timepilot-smart-commitments') || '[]');
-            setSmartCommitments(initialSmartCommitments);
             setStudyPlans(initialStudyPlans);
             setIsPlanStale(false); // Mark plan as not stale on initial load
             setHasLoadedFromStorage(true); // Mark that initial load is complete
@@ -540,7 +538,6 @@ function App() {
                 studyPlanMode: 'even', // Set default to 'even'
             });
             setFixedCommitments([]);
-            setSmartCommitments([]);
             setStudyPlans([]);
             setIsPlanStale(false); // Mark plan as not stale on initial load (even on error)
             setHasLoadedFromStorage(true); // Mark that initial load is complete
@@ -561,9 +558,6 @@ function App() {
         localStorage.setItem('timepilot-commitments', JSON.stringify(fixedCommitments));
     }, [fixedCommitments]);
 
-    useEffect(() => {
-        localStorage.setItem('timepilot-smart-commitments', JSON.stringify(smartCommitments));
-    }, [smartCommitments]);
 
     useEffect(() => {
         localStorage.setItem('timepilot-studyPlans', JSON.stringify(studyPlans));
@@ -577,12 +571,12 @@ function App() {
             return;
         }
         // Only set isPlanStale if there are tasks and commitments
-        if (tasks.length > 0 && (fixedCommitments.length > 0 || smartCommitments.length > 0)) {
+        if (tasks.length > 0 && fixedCommitments.length > 0) {
             setIsPlanStale(true);
         } else {
             setIsPlanStale(false);
         }
-    }, [tasks, settings, fixedCommitments, smartCommitments, hasLoadedFromStorage]);
+    }, [tasks, settings, fixedCommitments, hasLoadedFromStorage]);
 
     // Manual study plan generation handler
     const handleGenerateStudyPlan = async () => {
