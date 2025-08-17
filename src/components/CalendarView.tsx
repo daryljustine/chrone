@@ -842,18 +842,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         opacity = 0;
         display = 'none';
       }
-    } else if (event.resource.type === 'smart-commitment') {
-      const commitment = event.resource.data as SmartCommitment;
-      // Use category-based colors for smart commitments
-      if (commitment.category && categoryColorMap[commitment.category]) {
-        backgroundColor = categoryColorMap[commitment.category];
-      } else {
-        backgroundColor = colorSettings.uncategorizedTaskColor;
-      }
-
-      // Add dotted border pattern to indicate smart commitment
-      backgroundImage = 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)';
-      backgroundSize = '8px 8px';
     }
     // Add visual indicators for task importance
     let borderStyle = 'none';
