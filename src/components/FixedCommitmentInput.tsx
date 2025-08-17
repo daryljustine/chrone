@@ -206,46 +206,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
 
       {isOpen && (
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Commitment Type Selection */}
-          <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-3 dark:text-gray-200">
-              Commitment Type
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="commitmentType"
-                  checked={commitmentType === 'fixed'}
-                  onChange={() => setCommitmentType('fixed')}
-                  className="text-blue-600 focus:ring-blue-500"
-                />
-                <div className="flex items-center space-x-2">
-                  <Settings className="text-gray-500" size={18} />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Fixed Schedule</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Set exact times manually</p>
-                  </div>
-                </div>
-              </label>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="commitmentType"
-                  checked={commitmentType === 'smart'}
-                  onChange={() => setCommitmentType('smart')}
-                  className="text-blue-600 focus:ring-blue-500"
-                />
-                <div className="flex items-center space-x-2">
-                  <Brain className="text-purple-500" size={18} />
-                  <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Smart Schedule</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">AI optimizes your schedule</p>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
