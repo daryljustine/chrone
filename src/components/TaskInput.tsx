@@ -145,27 +145,7 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
     }
   }, [formData.deadline]);
 
-  // Reset conflicting options when one-sitting task is toggled
-  useEffect(() => {
-    if (formData.isOneTimeTask) {
-      // One-sitting tasks use the total time as session duration
-      const totalHours = parseFloat(formData.estimatedHours || '0') + parseFloat(formData.estimatedMinutes || '0') / 60;
-      setFormData(f => ({ ...f, sessionDuration: totalHours || 2 }));
-    }
-  }, [formData.isOneTimeTask, formData.estimatedHours, formData.estimatedMinutes]);
 
-  // Calculate estimated sessions based on total time and session duration
-  const sessionCalculation = useMemo(() => {
-    const totalHours = parseFloat(formData.totalTimeNeeded || formData.estimatedHours || '0') + parseFloat(formData.estimatedMinutes || '0') / 60;
-    const sessionDuration = formData.sessionDuration || 2;
-    const estimatedSessions = Math.ceil(totalHours / sessionDuration);
-
-    return {
-      totalHours,
-      sessionDuration,
-      estimatedSessions
-    };
-  }, [formData.totalTimeNeeded, formData.estimatedHours, formData.estimatedMinutes, formData.sessionDuration]);
 
   // Check if form is valid for submission
   const isFormInvalid = useMemo(() => {
@@ -286,42 +266,6 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
   // Handle category custom
   const showCustomCategory = formData.category === 'Custom...';
 
-  // Calculate smart session distribution based on deadline pressure
-  const sessionDistribution = useMemo(() => {
-    if (!formData.deadline || formData.deadlineType === 'none') {
-      return {
-        suggestedFrequency: 'relaxed',
-        description: 'Sessions will be distributed based on available time slots',
-        sessions: sessionCalculation.estimatedSessions
-      };
-    }
-
-    const startDate = new Date(formData.startDate || new Date().toISOString().split('T')[0]);
-    const deadlineDate = new Date(formData.deadline);
-    const timeDiff = deadlineDate.getTime() - startDate.getTime();
-    const daysUntilDeadline = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-    let suggestedFrequency;
-    let description;
-
-    if (daysUntilDeadline < 7) {
-      suggestedFrequency = 'urgent';
-      description = 'Daily sessions recommended due to urgent deadline';
-    } else if (daysUntilDeadline < 14) {
-      suggestedFrequency = 'moderate';
-      description = 'Every other day sessions recommended';
-    } else {
-      suggestedFrequency = 'relaxed';
-      description = '2-3 sessions per week recommended';
-    }
-
-    return {
-      suggestedFrequency,
-      description,
-      sessions: sessionCalculation.estimatedSessions,
-      daysAvailable: daysUntilDeadline
-    };
-  }, [formData.deadline, formData.deadlineType, formData.startDate, sessionCalculation]);
 
   // Enhanced validation with better error messages
   const isTitleValid = formData.title.trim().length > 0;
@@ -432,9 +376,8 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
       // New fields for deadline flexibility
       deadlineType: formData.deadline ? formData.deadlineType : 'none',
       schedulingPreference: formData.schedulingPreference,
-      // Session-based estimation properties
-      sessionDuration: formData.sessionDuration,
-      totalTimeNeeded: parseFloat(formData.totalTimeNeeded || '0') || undefined,
+      // Maximum session length for no-deadline tasks
+      maxSessionLength: formData.maxSessionLength,
       isOneTimeTask: formData.isOneTimeTask,
       startDate: formData.startDate || today,
     });
@@ -450,8 +393,6 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
       taskType: '',
       deadlineType: 'hard',
       schedulingPreference: 'consistent',
-      sessionDuration: 2, // Default 2 hours per session
-      totalTimeNeeded: '',
       maxSessionLength: 2,
       isOneTimeTask: false,
       startDate: today,
@@ -574,68 +515,6 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
               )}
             </div>
 
-            {/* Session-Based Estimation */}
-            {!formData.isOneTimeTask && (
-              <div className="mt-4">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                  Session Planning
-                </label>
-
-                <div className="space-y-3">
-                  {/* Session Duration Input */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">
-                      Preferred session duration
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={formData.sessionDuration}
-                        onChange={e => setFormData(f => ({ ...f, sessionDuration: parseFloat(e.target.value) || 2 }))}
-                        min="0.5"
-                        max="8"
-                        step="0.5"
-                        className="w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">hours per session</span>
-                    </div>
-                  </div>
-
-                  {/* Alternative Total Time Input */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">
-                      Total time needed (optional alternative to estimation above)
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={formData.totalTimeNeeded}
-                        onChange={e => setFormData(f => ({ ...f, totalTimeNeeded: e.target.value }))}
-                        placeholder="e.g., 12"
-                        min="0"
-                        step="0.5"
-                        className="w-24 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">total hours</span>
-                    </div>
-                  </div>
-
-                  {/* Session Calculation Display */}
-                  {sessionCalculation.totalHours > 0 && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                      <div className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
-                        📅 Session Plan Preview
-                      </div>
-                      <div className="text-xs text-blue-700 dark:text-blue-300">
-                        <div>• {sessionCalculation.estimatedSessions} sessions of {sessionCalculation.sessionDuration}h each</div>
-                        <div>• Total: {sessionCalculation.totalHours}h</div>
-                        <div className="mt-1 font-medium">{sessionDistribution.description}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Task Timeline Toggle Button */}
             <div className="mt-4">
@@ -734,54 +613,28 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
                     </label>
                   </div>
 
-                  {/* Session-based estimation for all tasks */}
-                  <div className="space-y-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Session duration</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          value={formData.sessionDuration}
-                          onChange={e => setFormData(f => ({ ...f, sessionDuration: parseFloat(e.target.value) || 2 }))}
-                          min="0.5"
-                          max="8"
-                          step="0.5"
-                          className="w-20 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white"
-                        />
-                        <span className="text-xs text-gray-600 dark:text-gray-400">hours per session</span>
+                  {/* Maximum session length field for no-deadline tasks */}
+                  {formData.deadlineType === 'none' && (
+                    <div className="space-y-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">
+                          Maximum session length
+                          <span className="text-gray-500 text-xs ml-1">(for tasks with no deadline but distributed into sessions)</span>
+                        </label>
+                        <select
+                          value={formData.maxSessionLength || 2}
+                          onChange={e => setFormData(f => ({ ...f, maxSessionLength: parseFloat(e.target.value) }))}
+                          className="w-full px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white"
+                        >
+                          <option value={1}>1 hour</option>
+                          <option value={1.5}>1.5 hours</option>
+                          <option value={2}>2 hours</option>
+                          <option value={3}>3 hours</option>
+                          <option value={4}>4 hours</option>
+                        </select>
                       </div>
                     </div>
-
-                    {/* Total time alternative input */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Total time needed (optional)</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          value={formData.totalTimeNeeded}
-                          onChange={e => setFormData(f => ({ ...f, totalTimeNeeded: e.target.value }))}
-                          placeholder="e.g., 12"
-                          min="0"
-                          step="0.5"
-                          className="w-24 px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white"
-                        />
-                        <span className="text-xs text-gray-600 dark:text-gray-400">total hours</span>
-                      </div>
-                    </div>
-
-                    {/* Session calculation display */}
-                    {sessionCalculation.totalHours > 0 && (
-                      <div className="p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded text-xs">
-                        <div className="font-medium text-green-800 dark:text-green-200">
-                          📅 {sessionCalculation.estimatedSessions} sessions × {sessionCalculation.sessionDuration}h = {sessionCalculation.totalHours}h total
-                        </div>
-                        <div className="text-green-700 dark:text-green-300 mt-1">
-                          {sessionDistribution.description}
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
+                  )}
                 </div>
               )}
             </div>

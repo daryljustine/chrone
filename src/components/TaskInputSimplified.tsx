@@ -29,10 +29,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     startDate: new Date().toISOString().split('T')[0],
     // Simplified estimation fields
     totalTimeNeeded: '',
-    // Temporary: keep these to prevent runtime errors until UI is cleaned up
-    estimationMode: 'total' as 'total' | 'session',
-    sessionDurationHours: '',
-    sessionDurationMinutes: '30',
   });
 
   const [showTimeEstimationModal, setShowTimeEstimationModal] = useState(false);
@@ -42,7 +38,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
   
   // Quick time presets
   const [showTimePresets, setShowTimePresets] = useState(false);
-  const [showSessionPresets, setShowSessionPresets] = useState(false);
   const timePresets = [
     { label: '15m', hours: '0', minutes: '15' },
     { label: '30m', hours: '0', minutes: '30' },
@@ -51,15 +46,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     { label: '1h 30m', hours: '1', minutes: '30' },
     { label: '2h', hours: '2', minutes: '0' },
     { label: '3h', hours: '3', minutes: '0' },
-  ];
-
-  const sessionPresets = [
-    { label: '15m', hours: '0', minutes: '15' },
-    { label: '30m', hours: '0', minutes: '30' },
-    { label: '45m', hours: '0', minutes: '45' },
-    { label: '1h', hours: '1', minutes: '0' },
-    { label: '1h 30m', hours: '1', minutes: '30' },
-    { label: '2h', hours: '2', minutes: '0' },
   ];
 
   // Auto-detect deadline type based on whether deadline is set
@@ -87,10 +73,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     return parseInt(hours || '0') + parseInt(minutes || '0') / 60;
   };
 
-  // Temporary: minimal function to prevent runtime errors
-  const calculateSessionBasedTotal = useMemo(() => {
-    return 0; // Always return 0 since we're not using this anymore
-  }, []);
 
   // Get effective total time (use totalTimeNeeded if provided, otherwise estimatedHours+Minutes)
   const getEffectiveTotalTime = () => {
@@ -119,17 +101,31 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       };
     }
 
-    return calculateSessionDistribution(
-      {
-        deadline: formData.deadline,
-        estimatedHours: effectiveTime,
-        sessionDuration: formData.sessionDuration || 2,
-        deadlineType: formData.deadlineType,
-        startDate: formData.startDate
-      },
-      userSettings
-    );
-  }, [formData.sessionDuration, formData.deadline, formData.deadlineType, formData.startDate, formData.isOneTimeTask, getEffectiveTotalTime(), userSettings, today]);
+    // Simple description based on deadline urgency
+    const startDate = new Date(formData.startDate || today);
+    const deadlineDate = new Date(formData.deadline);
+    const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilDeadline < 7) {
+      return {
+        suggestedFrequency: 'urgent' as const,
+        description: 'Urgent deadline - daily sessions recommended',
+        estimatedSessions: Math.ceil(effectiveTime / 2) // Assume 2h sessions
+      };
+    } else if (daysUntilDeadline < 14) {
+      return {
+        suggestedFrequency: 'moderate' as const,
+        description: 'Moderate timeline - every other day sessions',
+        estimatedSessions: Math.ceil(effectiveTime / 2)
+      };
+    } else {
+      return {
+        suggestedFrequency: 'relaxed' as const,
+        description: '2-3 sessions per week recommended',
+        estimatedSessions: Math.ceil(effectiveTime / 2)
+      };
+    }
+  }, [formData.deadline, formData.deadlineType, formData.startDate, formData.isOneTimeTask, getEffectiveTotalTime(), today]);
 
   // Show custom category input when "Custom..." is selected
   const showCustomCategory = formData.category === 'Custom...';
@@ -244,6 +240,7 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       totalTimeNeeded: formData.totalTimeNeeded ? parseFloat(formData.totalTimeNeeded) : undefined,
       isOneTimeTask: formData.isOneTimeTask,
       startDate: formData.startDate || today,
+      maxSessionLength: 2, // Default max session length
     });
     setShowValidationErrors(false);
     // Reset form
@@ -262,10 +259,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       isOneTimeTask: false,
       startDate: today,
       totalTimeNeeded: '',
-      // Temporary: keep these until UI cleanup is complete
-      estimationMode: 'total',
-      sessionDurationHours: '',
-      sessionDurationMinutes: '30',
     });
     // Hide the form after successful submission
     onCancel?.();
@@ -526,177 +519,91 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
               </label>
             </div>
 
-            {formData.estimationMode === 'total' ? (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-1 p-3 border border-white/30 dark:border-white/20 rounded-xl bg-white/70 dark:bg-black/20">
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-medium text-gray-800 dark:text-white">
-                        {totalTime > 0 ? formatTimeDisplay(formData.estimatedHours, formData.estimatedMinutes) : 'Not set'}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {formData.estimatedHours && (
-                          <button
-                            type="button"
-                            aria-label="Clear hours"
-                            title="Clear hours"
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                            onClick={() => setFormData(f => ({ ...f, estimatedHours: '' }))}
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                        {(formData.estimatedMinutes && formData.estimatedMinutes !== '0') && (
-                          <button
-                            type="button"
-                            aria-label="Clear minutes"
-                            title="Clear minutes"
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                            onClick={() => setFormData(f => ({ ...f, estimatedMinutes: '0' }))}
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                      </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="flex-1 p-3 border border-white/30 dark:border-white/20 rounded-xl bg-white/70 dark:bg-black/20">
+                  <div className="flex items-center justify-between">
+                    <div className="text-lg font-medium text-gray-800 dark:text-white">
+                      {totalTime > 0 ? formatTimeDisplay(formData.estimatedHours, formData.estimatedMinutes) : 'Not set'}
                     </div>
-                    {formData.taskType && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Task type: {formData.taskType}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowTimeEstimationModal(true)}
-                    className="flex items-center space-x-2 px-4 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors"
-                  >
-                    <Clock size={18} />
-                    <span>Estimate</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setShowTimeEstimationModal(true)}
-                    className="text-violet-600 dark:text-violet-400 hover:underline"
-                  >
-                    Need help estimating?
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTimePresets(!showTimePresets)}
-                    className="text-violet-600 dark:text-violet-400 hover:underline"
-                  >
-                    {showTimePresets ? 'Hide quick presets' : 'Show quick presets'}
-                  </button>
-                </div>
-                {showTimePresets && (
-                  <div className="mt-1">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Quick presets:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {timePresets.map((preset, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setFormData(f => ({
-                            ...f,
-                            estimatedHours: preset.hours,
-                            estimatedMinutes: preset.minutes,
-                          }))}
-                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded border transition-colors"
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-3 border border-white/30 dark:border-white/20 rounded-xl bg-white/70 dark:bg-black/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Session Duration</div>
                     <div className="flex items-center gap-2">
-                      {formData.sessionDurationHours && (
+                      {formData.estimatedHours && (
                         <button
                           type="button"
-                          aria-label="Clear session hours"
-                          title="Clear session hours"
+                          aria-label="Clear hours"
+                          title="Clear hours"
                           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                          onClick={() => setFormData(f => ({ ...f, sessionDurationHours: '' }))}
+                          onClick={() => setFormData(f => ({ ...f, estimatedHours: '' }))}
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      {(formData.estimatedMinutes && formData.estimatedMinutes !== '0') && (
+                        <button
+                          type="button"
+                          aria-label="Clear minutes"
+                          title="Clear minutes"
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          onClick={() => setFormData(f => ({ ...f, estimatedMinutes: '0' }))}
                         >
                           <X size={16} />
                         </button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={formData.sessionDurationHours}
-                        onChange={e => setFormData(f => ({ ...f, sessionDurationHours: e.target.value }))}
-                        className="w-16 px-2 py-1 text-sm border border-white/30 dark:border-white/20 rounded bg-white/70 dark:bg-black/20 dark:text-white focus:ring-2 focus:ring-violet-500"
-                        placeholder="0"
-                        min="0"
-                        max="8"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">h</span>
+                  {formData.taskType && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Task type: {formData.taskType}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={formData.sessionDurationMinutes}
-                        onChange={e => setFormData(f => ({ ...f, sessionDurationMinutes: e.target.value }))}
-                        className="w-16 px-2 py-1 text-sm border border-white/30 dark:border-white/20 rounded bg-white/70 dark:bg-black/20 dark:text-white focus:ring-2 focus:ring-violet-500"
-                        placeholder="0"
-                        min="0"
-                        max="59"
-                        step="5"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">m</span>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">per session</div>
-                  </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setShowSessionPresets(!showSessionPresets)}
-                    className="text-violet-600 dark:text-violet-400 hover:underline"
-                  >
-                    {showSessionPresets ? 'Hide session presets' : 'Show session presets'}
-                  </button>
-                </div>
-                {showSessionPresets && (
-                  <div className="mt-1">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Common session durations:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {sessionPresets.map((preset, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setFormData(f => ({
-                            ...f,
-                            sessionDurationHours: preset.hours,
-                            sessionDurationMinutes: preset.minutes,
-                          }))}
-                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded border transition-colors"
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {formData.estimationMode === 'session' && (!formData.deadline || formData.deadlineType === 'none') && (
-                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded text-xs text-yellow-700 dark:text-yellow-200">
-                    Session-based estimation requires a deadline to calculate total time.
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowTimeEstimationModal(true)}
+                  className="flex items-center space-x-2 px-4 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors"
+                >
+                  <Clock size={18} />
+                  <span>Estimate</span>
+                </button>
               </div>
-            )}
+              <div className="flex items-center gap-4 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowTimeEstimationModal(true)}
+                  className="text-violet-600 dark:text-violet-400 hover:underline"
+                >
+                  Need help estimating?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTimePresets(!showTimePresets)}
+                  className="text-violet-600 dark:text-violet-400 hover:underline"
+                >
+                  {showTimePresets ? 'Hide quick presets' : 'Show quick presets'}
+                </button>
+              </div>
+              {showTimePresets && (
+                <div className="mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Quick presets:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {timePresets.map((preset, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setFormData(f => ({
+                          ...f,
+                          estimatedHours: preset.hours,
+                          estimatedMinutes: preset.minutes,
+                        }))}
+                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded border transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 8. Task Importance */}
