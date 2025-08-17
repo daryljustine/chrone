@@ -38,7 +38,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
   
   // Quick time presets
   const [showTimePresets, setShowTimePresets] = useState(false);
-  const [showSessionPresets, setShowSessionPresets] = useState(false);
   const timePresets = [
     { label: '15m', hours: '0', minutes: '15' },
     { label: '30m', hours: '0', minutes: '30' },
@@ -47,15 +46,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     { label: '1h 30m', hours: '1', minutes: '30' },
     { label: '2h', hours: '2', minutes: '0' },
     { label: '3h', hours: '3', minutes: '0' },
-  ];
-
-  const sessionPresets = [
-    { label: '15m', hours: '0', minutes: '15' },
-    { label: '30m', hours: '0', minutes: '30' },
-    { label: '45m', hours: '0', minutes: '45' },
-    { label: '1h', hours: '1', minutes: '0' },
-    { label: '1h 30m', hours: '1', minutes: '30' },
-    { label: '2h', hours: '2', minutes: '0' },
   ];
 
   // Auto-detect deadline type based on whether deadline is set
