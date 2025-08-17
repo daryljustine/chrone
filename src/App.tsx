@@ -1325,7 +1325,7 @@ function App() {
     };
 
     // Update handleSelectTask to also store planDate and sessionNumber if available
-    const handleSelectCommitment = (commitment: FixedCommitment | SmartCommitment, duration: number) => {
+    const handleSelectCommitment = (commitment: FixedCommitment, duration: number) => {
         // Only allow timer for commitments that count toward daily hours
         if (!commitment.countsTowardDailyHours) return;
 
