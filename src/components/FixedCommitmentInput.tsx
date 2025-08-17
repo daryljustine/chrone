@@ -22,7 +22,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
   existingPlans
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [commitmentType, setCommitmentType] = useState<'fixed' | 'one-time'>('fixed');
   const [formData, setFormData] = useState({
     title: '',
     startTime: '',
