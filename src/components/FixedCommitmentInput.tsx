@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Clock, MapPin, User, AlertTriangle, Calendar, Brain, Settings, Zap } from 'lucide-react';
+import { Plus, Clock, MapPin, User, AlertTriangle, Calendar } from 'lucide-react';
 import { FixedCommitment, TimeRange, UserSettings, StudyPlan } from '../types';
 import { checkCommitmentConflicts } from '../utils/scheduling';
 
