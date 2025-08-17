@@ -938,16 +938,7 @@ function App() {
 
 
     const handleDeleteCommitment = async (commitmentId: string) => {
-        // Check if it's a smart commitment first
-        const smartCommitment = smartCommitments.find(c => c.id === commitmentId);
-        if (smartCommitment) {
-            setSmartCommitments(prev => prev.filter(c => c.id !== commitmentId));
-            setLastPlanStaleReason("commitment");
-            setIsPlanStale(true);
-            return;
-        }
-
-        // Handle fixed commitment deletion (existing logic)
+        // Handle fixed commitment deletion
         const commitmentToDelete = fixedCommitments.find(c => c.id === commitmentId);
         if (!commitmentToDelete) return;
 
