@@ -52,7 +52,6 @@ const getCategoryColor = (category: string) => {
 const CommitmentsList: React.FC<CommitmentsListProps> = ({
   commitments,
   onEditCommitment,
-  onEditSmartCommitment,
   onDeleteCommitment,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
