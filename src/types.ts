@@ -152,46 +152,6 @@ export interface GeneratedSession {
   dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
 }
 
-export interface SmartCommitment {
-  id: string;
-  title: string;
-  type: 'smart';
-  category: string;
-  location?: string;
-  description?: string;
-  createdAt: string;
-
-  // Goal-based inputs
-  totalHoursPerWeek: number;
-  preferredDays: number[]; // Array of preferred days (0 = Sunday, 1 = Monday, etc.)
-  preferredTimeRanges: TimeRange[]; // Array of preferred time ranges
-  sessionDurationRange: { min: number; max: number }; // Session duration range in minutes
-
-  // Flexibility settings
-  allowTimeShifting: boolean; // Allow system to shift times when conflicts arise
-  priorityLevel: 'important' | 'standard'; // Priority for conflict resolution
-
-  // Generated schedule
-  suggestedSessions: GeneratedSession[];
-  isConfirmed: boolean; // Whether user has confirmed the suggested schedule
-
-  // Date range for the smart commitment
-  dateRange?: {
-    startDate: string; // YYYY-MM-DD format
-    endDate: string; // YYYY-MM-DD format
-  };
-
-  // Manual overrides tracking
-  manualOverrides?: {
-    [date: string]: {
-      startTime?: string;
-      endTime?: string;
-      isDeleted?: boolean;
-    };
-  };
-
-  countsTowardDailyHours?: boolean; // Whether this commitment counts toward daily available hours
-}
 
 export interface FixedCommitment {
   id: string;
@@ -226,7 +186,7 @@ export interface FixedCommitment {
 }
 
 // Union type for all commitment types
-export type Commitment = FixedCommitment | SmartCommitment;
+export type Commitment = FixedCommitment;
 
 export interface CalendarEvent {
   id: string;

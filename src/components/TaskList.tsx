@@ -534,37 +534,6 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
                       )}
                     </div>
 
-                    {/* 6. Session Planning */}
-                    {!editFormData.isOneTimeTask && (
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                          Session Duration
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={editFormData.sessionDuration || 2}
-                            onChange={(e) => setEditFormData({ ...editFormData, sessionDuration: parseFloat(e.target.value) || 2 })}
-                            min="0.5"
-                            max="8"
-                            step="0.5"
-                            className="w-24 px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">hours per session</span>
-                        </div>
-
-                        {editFormData.deadline && (
-                          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs">
-                            <div className="font-medium text-blue-800 dark:text-blue-200">
-                              📅 Smart Distribution Preview
-                            </div>
-                            <div className="text-blue-700 dark:text-blue-300 mt-1">
-                              Sessions distributed automatically based on deadline pressure
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     {/* 7. Time Estimation - Dual Mode Interface */}
                     <div>

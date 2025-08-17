@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, CheckSquare, Clock, Settings as SettingsIcon, BarChart3, CalendarDays, Lightbulb, Edit, Trash2, Menu, X, HelpCircle, Trophy, User } from 'lucide-react';
-import { Task, StudyPlan, UserSettings, FixedCommitment, SmartCommitment, Commitment, StudySession, TimerState } from './types';
+import { Task, StudyPlan, UserSettings, FixedCommitment, Commitment, StudySession, TimerState } from './types';
 import { GamificationData, Achievement, DailyChallenge, MotivationalMessage } from './types-gamification';
 import { getUnscheduledMinutesForTasks, getLocalDateString, checkCommitmentConflicts, generateNewStudyPlan, generateNewStudyPlanWithPreservation, reshuffleStudyPlan, markPastSessionsAsSkipped } from './utils/scheduling';
 import { getAccurateUnscheduledTasks, shouldShowNotifications, getNotificationPriority } from './utils/enhanced-notifications';
-import { convertSmartCommitmentsToFixedFormat } from './utils/smart-commitment-integration';
-import { generateSmartCommitmentSchedule } from './utils/smart-commitment-scheduling';
 import { enhancedEstimationTracker } from './utils/enhanced-estimation-tracker';
 import {
   ACHIEVEMENTS,
@@ -26,7 +24,6 @@ import Settings from './components/Settings';
 import CalendarView from './components/CalendarView';
 import FixedCommitmentInput from './components/FixedCommitmentInput';
 import FixedCommitmentEdit from './components/FixedCommitmentEdit';
-import SmartCommitmentEdit from './components/SmartCommitmentEdit';
 import CommitmentsList from './components/CommitmentsList';
 import GamificationPanel from './components/GamificationPanel';
 import AchievementNotification, { MotivationalToast } from './components/AchievementNotification';
@@ -49,7 +46,6 @@ function App() {
     const [currentTask, setCurrentTask] = useState<Task | null>(null);
     const [currentSession, setCurrentSession] = useState<{ allocatedHours: number; planDate?: string; sessionNumber?: number } | null>(null);
     const [fixedCommitments, setFixedCommitments] = useState<FixedCommitment[]>([]);
-    const [smartCommitments, setSmartCommitments] = useState<SmartCommitment[]>([]);
     const [settings, setSettings] = useState<UserSettings>({
         dailyAvailableHours: 6,
         workDays: [0, 1, 2, 3, 4, 5, 6],
@@ -78,7 +74,6 @@ function App() {
     // Add state to track last-timed session and ready-to-mark-done
     const [lastTimedSession, setLastTimedSession] = useState<{ planDate: string; sessionNumber: number } | null>(null);
     const [editingCommitment, setEditingCommitment] = useState<FixedCommitment | null>(null);
-    const [editingSmartCommitment, setEditingSmartCommitment] = useState<SmartCommitment | null>(null);
 
     // Global timer state that persists across tab switches
     const [globalTimer, setGlobalTimer] = useState<TimerState>({
@@ -518,8 +513,6 @@ function App() {
             setTasks(initialTasks);
             setSettings(initialSettings);
             setFixedCommitments(initialCommitments);
-            const initialSmartCommitments = JSON.parse(localStorage.getItem('timepilot-smart-commitments') || '[]');
-            setSmartCommitments(initialSmartCommitments);
             setStudyPlans(initialStudyPlans);
             setIsPlanStale(false); // Mark plan as not stale on initial load
             setHasLoadedFromStorage(true); // Mark that initial load is complete
@@ -545,7 +538,6 @@ function App() {
                 studyPlanMode: 'even', // Set default to 'even'
             });
             setFixedCommitments([]);
-            setSmartCommitments([]);
             setStudyPlans([]);
             setIsPlanStale(false); // Mark plan as not stale on initial load (even on error)
             setHasLoadedFromStorage(true); // Mark that initial load is complete
@@ -566,9 +558,6 @@ function App() {
         localStorage.setItem('timepilot-commitments', JSON.stringify(fixedCommitments));
     }, [fixedCommitments]);
 
-    useEffect(() => {
-        localStorage.setItem('timepilot-smart-commitments', JSON.stringify(smartCommitments));
-    }, [smartCommitments]);
 
     useEffect(() => {
         localStorage.setItem('timepilot-studyPlans', JSON.stringify(studyPlans));
@@ -582,12 +571,12 @@ function App() {
             return;
         }
         // Only set isPlanStale if there are tasks and commitments
-        if (tasks.length > 0 && (fixedCommitments.length > 0 || smartCommitments.length > 0)) {
+        if (tasks.length > 0 && fixedCommitments.length > 0) {
             setIsPlanStale(true);
         } else {
             setIsPlanStale(false);
         }
-    }, [tasks, settings, fixedCommitments, smartCommitments, hasLoadedFromStorage]);
+    }, [tasks, settings, fixedCommitments, hasLoadedFromStorage]);
 
     // Manual study plan generation handler
     const handleGenerateStudyPlan = async () => {
@@ -886,21 +875,9 @@ function App() {
 
     // Helper function to get all commitments in format expected by scheduling functions
     const getAllCommitmentsForScheduling = (): FixedCommitment[] => {
-        const convertedSmartCommitments = convertSmartCommitmentsToFixedFormat(smartCommitments);
-        return [...fixedCommitments, ...convertedSmartCommitments];
+        return fixedCommitments;
     };
 
-    const handleAddSmartCommitment = async (commitmentData: Omit<SmartCommitment, 'id' | 'createdAt'>) => {
-        const newCommitment: SmartCommitment = {
-            ...commitmentData,
-            id: Date.now().toString(),
-            createdAt: new Date().toISOString()
-        };
-
-        setSmartCommitments(prev => [...prev, newCommitment]);
-        setLastPlanStaleReason("commitment");
-        setIsPlanStale(true);
-    };
 
     const handleAddFixedCommitment = async (commitmentData: Omit<FixedCommitment, 'id' | 'createdAt'>) => {
         const newCommitment: FixedCommitment = {
@@ -959,76 +936,9 @@ function App() {
         }
     };
 
-    const handleUpdateSmartCommitment = (commitmentId: string, updates: Partial<SmartCommitment>) => {
-        setSmartCommitments(prev => prev.map(c => {
-            if (c.id === commitmentId) {
-                const updatedCommitment = { ...c, ...updates };
-
-                // Regenerate schedule if any scheduling-related properties were updated
-                const needsScheduleRegeneration =
-                    updates.totalHoursPerWeek !== undefined ||
-                    updates.preferredDays !== undefined ||
-                    updates.preferredTimeRanges !== undefined ||
-                    updates.sessionDurationRange !== undefined ||
-                    updates.allowTimeShifting !== undefined ||
-                    updates.priorityLevel !== undefined ||
-                    updates.dateRange !== undefined;
-
-                if (needsScheduleRegeneration) {
-                    try {
-                        const newSessions = generateSmartCommitmentSchedule(
-                            {
-                                title: updatedCommitment.title,
-                                category: updatedCommitment.category,
-                                location: updatedCommitment.location,
-                                description: updatedCommitment.description,
-                                totalHoursPerWeek: updatedCommitment.totalHoursPerWeek,
-                                preferredDays: updatedCommitment.preferredDays,
-                                preferredTimeRanges: updatedCommitment.preferredTimeRanges,
-                                sessionDurationRange: updatedCommitment.sessionDurationRange,
-                                allowTimeShifting: updatedCommitment.allowTimeShifting,
-                                priorityLevel: updatedCommitment.priorityLevel,
-                                dateRange: updatedCommitment.dateRange,
-                                countsTowardDailyHours: updatedCommitment.countsTowardDailyHours
-                            },
-                            settings,
-                            [...fixedCommitments, ...smartCommitments.filter(sc => sc.id !== commitmentId)],
-                            studyPlans
-                        );
-
-                        return {
-                            ...updatedCommitment,
-                            suggestedSessions: newSessions,
-                            isConfirmed: false,
-                            // Preserve existing manual overrides
-                            manualOverrides: c.manualOverrides
-                        };
-                    } catch (error) {
-                        console.warn('Failed to regenerate smart commitment schedule:', error);
-                        return { ...updatedCommitment, isConfirmed: false };
-                    }
-                } else {
-                    // If only non-scheduling properties were updated (like title, description)
-                    return { ...updatedCommitment, isConfirmed: false };
-                }
-            }
-            return c;
-        }));
-        setLastPlanStaleReason("commitment");
-        setIsPlanStale(true);
-    };
 
     const handleDeleteCommitment = async (commitmentId: string) => {
-        // Check if it's a smart commitment first
-        const smartCommitment = smartCommitments.find(c => c.id === commitmentId);
-        if (smartCommitment) {
-            setSmartCommitments(prev => prev.filter(c => c.id !== commitmentId));
-            setLastPlanStaleReason("commitment");
-            setIsPlanStale(true);
-            return;
-        }
-
-        // Handle fixed commitment deletion (existing logic)
+        // Handle fixed commitment deletion
         const commitmentToDelete = fixedCommitments.find(c => c.id === commitmentId);
         if (!commitmentToDelete) return;
 
@@ -1415,7 +1325,7 @@ function App() {
     };
 
     // Update handleSelectTask to also store planDate and sessionNumber if available
-    const handleSelectCommitment = (commitment: FixedCommitment | SmartCommitment, duration: number) => {
+    const handleSelectCommitment = (commitment: FixedCommitment, duration: number) => {
         // Only allow timer for commitments that count toward daily hours
         if (!commitment.countsTowardDailyHours) return;
 
@@ -2575,7 +2485,6 @@ function App() {
                             studyPlans={studyPlans}
                             tasks={tasks}
                             fixedCommitments={fixedCommitments}
-                            smartCommitments={smartCommitments}
                             onSelectTask={handleSelectTask}
                             onSelectCommitment={handleSelectCommitment}
                             onGenerateStudyPlan={handleGenerateStudyPlan}
@@ -2593,7 +2502,6 @@ function App() {
                         <CalendarView
                             studyPlans={studyPlans}
                             fixedCommitments={fixedCommitments}
-                            smartCommitments={smartCommitments}
                             tasks={tasks}
                             settings={settings}
                             onSelectTask={handleSelectTask}
@@ -2622,6 +2530,7 @@ function App() {
                                 setActiveTab('timer');
                             }}
                             onDeleteFixedCommitment={handleDeleteCommitment}
+                            onUpdateCommitment={handleUpdateFixedCommitment}
                             onUpdateStudyPlans={setStudyPlans}
                         />
                     )}
@@ -2658,8 +2567,7 @@ function App() {
                         <div className="space-y-4 sm:space-y-6">
                             <FixedCommitmentInput
                                 onAddCommitment={handleAddFixedCommitment}
-                                onAddSmartCommitment={handleAddSmartCommitment}
-                                existingCommitments={[...fixedCommitments, ...smartCommitments]}
+                                existingCommitments={fixedCommitments}
                                 settings={settings}
                                 existingPlans={studyPlans}
                             />
@@ -2670,18 +2578,10 @@ function App() {
                                     onUpdateCommitment={handleUpdateFixedCommitment}
                                     onCancel={() => setEditingCommitment(null)}
                                 />
-                            ) : editingSmartCommitment ? (
-                                <SmartCommitmentEdit
-                                    commitment={editingSmartCommitment}
-                                    settings={settings}
-                                    onUpdateCommitment={handleUpdateSmartCommitment}
-                                    onCancel={() => setEditingSmartCommitment(null)}
-                                />
                             ) : (
                                 <CommitmentsList
-                                    commitments={[...fixedCommitments, ...smartCommitments]}
+                                    commitments={fixedCommitments}
                                     onEditCommitment={setEditingCommitment}
-                                    onEditSmartCommitment={setEditingSmartCommitment}
                                     onDeleteCommitment={handleDeleteCommitment}
                                 />
                             )}

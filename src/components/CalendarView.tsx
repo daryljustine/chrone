@@ -6,7 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import { StudyPlan, FixedCommitment, SmartCommitment, Task, StudySession, UserSettings } from '../types';
+import { StudyPlan, FixedCommitment, Task, StudySession, UserSettings } from '../types';
 import { BookOpen, Clock, Settings, X, Calendar as CalendarIcon, Brain } from 'lucide-react';
 import { checkSessionStatus, doesCommitmentApplyToDate } from '../utils/scheduling';
 import { getLocalDateString } from '../utils/scheduling';
@@ -18,13 +18,13 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 interface CalendarViewProps {
   studyPlans: StudyPlan[];
   fixedCommitments: FixedCommitment[];
-  smartCommitments?: SmartCommitment[];
   tasks: Task[];
   settings?: UserSettings;
   onSelectTask?: (task: Task, session?: { allocatedHours: number; planDate?: string; sessionNumber?: number }) => void;
-  onSelectCommitment?: (commitment: FixedCommitment | SmartCommitment, duration: number) => void;
+  onSelectCommitment?: (commitment: FixedCommitment, duration: number) => void;
   onStartManualSession?: (commitment: FixedCommitment, durationSeconds: number) => void;
   onDeleteFixedCommitment?: (commitmentId: string) => void;
+  onUpdateCommitment?: (commitmentId: string, updates: Partial<FixedCommitment>) => void;
   onUpdateStudyPlans?: (updatedPlans: StudyPlan[]) => void;
 }
 
@@ -35,12 +35,10 @@ interface CalendarEvent {
   end: Date;
   allDay?: boolean;
   resource: {
-    type: 'study' | 'commitment' | 'smart-commitment';
-    data: StudySession | FixedCommitment | SmartCommitment;
+    type: 'study' | 'commitment';
+    data: StudySession | FixedCommitment;
     taskId?: string;
     planDate?: string; // For study sessions, which plan date they belong to
-    commitmentType?: 'fixed' | 'smart';
-    isPattern?: boolean; // For smart commitments, indicates this is part of a recurring pattern
   };
 }
 
@@ -100,13 +98,13 @@ function splitEventIfCrossesMidnight(start: Date, end: Date) {
 const CalendarView: React.FC<CalendarViewProps> = ({
   studyPlans,
   fixedCommitments,
-  smartCommitments = [],
   tasks,
   settings,
   onSelectTask,
   onSelectCommitment,
   onStartManualSession,
   onDeleteFixedCommitment,
+  onUpdateCommitment,
   onUpdateStudyPlans,
 }) => {
   const [timeInterval, setTimeInterval] = useState(() => {
@@ -427,48 +425,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       }
     });
 
-    // Convert smart commitments to calendar events
-    smartCommitments.forEach(commitment => {
-      commitment.suggestedSessions.forEach((session, sessionIndex) => {
-        // Check if this session has been manually deleted
-        if (commitment.manualOverrides?.[session.date]?.isDeleted) {
-          return;
-        }
-
-        // Apply manual overrides if they exist
-        const override = commitment.manualOverrides?.[session.date];
-        const startTime = override?.startTime || session.startTime;
-        const endTime = override?.endTime || session.endTime;
-
-        const startDateTime = new Date(session.date);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        startDateTime.setHours(startHour, startMinute, 0, 0);
-
-        const endDateTime = new Date(session.date);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-        endDateTime.setHours(endHour, endMinute, 0, 0);
-
-        // Split if crosses midnight
-        splitEventIfCrossesMidnight(startDateTime, endDateTime).forEach(({ start, end }, idx) => {
-          const uniqueId = `smart-commitment-${commitment.id}-${session.date}-${sessionIndex}-${startTime.replace(':', '')}-${idx}`;
-          calendarEvents.push({
-            id: uniqueId,
-            title: commitment.title,
-            start,
-            end,
-            resource: {
-              type: 'smart-commitment',
-              data: commitment,
-              commitmentType: 'smart',
-              isPattern: true
-            }
-          });
-        });
-      });
-    });
-
     return calendarEvents;
-  }, [studyPlans, fixedCommitments, smartCommitments, tasks]);
+  }, [studyPlans, fixedCommitments, tasks]);
 
   // Get all unique task categories
   const taskCategories = Array.from(new Set(tasks.map(t => t.category).filter((v): v is string => !!v)));
@@ -557,14 +515,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         setSelectedManualSession(commitment);
       } else if (commitment.countsTowardDailyHours && onSelectCommitment) {
         // Handle clicks on commitments that count toward daily hours
-        const duration = moment(event.end).diff(moment(event.start), 'hours', true);
-        onSelectCommitment(commitment, duration);
-      }
-    } else if (event.resource.type === 'smart-commitment') {
-      const commitment = event.resource.data as SmartCommitment;
-
-      if (commitment.countsTowardDailyHours && onSelectCommitment) {
-        // Handle clicks on smart commitments that count toward daily hours
         const duration = moment(event.end).diff(moment(event.start), 'hours', true);
         onSelectCommitment(commitment, duration);
       }
@@ -688,9 +638,67 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const handleEventDrop = ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
     setIsDragging(false);
 
-    // Only allow dragging study sessions, not commitments
+    // Handle commitment dragging
+    if (event.resource.type === 'commitment') {
+      const commitment = event.resource.data as FixedCommitment;
+
+      // Only allow dragging commitments that count toward daily hours
+      if (!commitment.countsTowardDailyHours) {
+        setDragFeedback('Only productive commitments can be moved');
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      if (!onUpdateCommitment) {
+        setDragFeedback('Commitment updates not available');
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      const targetDate = moment(start).format('YYYY-MM-DD');
+      const newStartTime = moment(start).format('HH:mm');
+      const newEndTime = moment(end).format('HH:mm');
+
+      // For one-time commitments, update the specific date
+      if (!commitment.recurring && commitment.specificDates?.includes(targetDate)) {
+        onUpdateCommitment(commitment.id, {
+          startTime: newStartTime,
+          endTime: newEndTime
+        });
+        setDragFeedback(`✅ Commitment moved to ${newStartTime} - ${newEndTime}`);
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      // For recurring commitments, create a modified occurrence for this specific date
+      if (commitment.recurring) {
+        const updatedModifiedOccurrences = {
+          ...commitment.modifiedOccurrences,
+          [targetDate]: {
+            startTime: newStartTime,
+            endTime: newEndTime,
+            title: commitment.title,
+            isAllDay: false
+          }
+        };
+
+        onUpdateCommitment(commitment.id, {
+          modifiedOccurrences: updatedModifiedOccurrences
+        });
+
+        setDragFeedback(`✅ Commitment moved to ${newStartTime} - ${newEndTime} on ${moment(targetDate).format('MMM D')}`);
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      setDragFeedback('Unable to update this commitment type');
+      setTimeout(() => setDragFeedback(''), 3000);
+      return;
+    }
+
+    // Only allow dragging study sessions if not a commitment
     if (event.resource.type !== 'study' || !onUpdateStudyPlans || !settings) {
-      setDragFeedback('Only study sessions can be moved');
+      setDragFeedback('Only study sessions and productive commitments can be moved');
       setTimeout(() => setDragFeedback(''), 3000);
       return;
     }
@@ -894,18 +902,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         opacity = 0;
         display = 'none';
       }
-    } else if (event.resource.type === 'smart-commitment') {
-      const commitment = event.resource.data as SmartCommitment;
-      // Use category-based colors for smart commitments
-      if (commitment.category && categoryColorMap[commitment.category]) {
-        backgroundColor = categoryColorMap[commitment.category];
-      } else {
-        backgroundColor = colorSettings.uncategorizedTaskColor;
-      }
-
-      // Add dotted border pattern to indicate smart commitment
-      backgroundImage = 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)';
-      backgroundSize = '8px 8px';
     }
     // Add visual indicators for task importance
     let borderStyle = 'none';
@@ -973,7 +969,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       default:
         // For custom categories, try to match common words
         if (categoryLower.includes('study') || categoryLower.includes('school') || categoryLower.includes('class')) {
-          return '📚';
+          return '���';
         } else if (categoryLower.includes('work') || categoryLower.includes('job') || categoryLower.includes('business')) {
           return '💼';
         } else if (categoryLower.includes('health') || categoryLower.includes('medical') || categoryLower.includes('fitness')) {
@@ -1267,11 +1263,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           dayLayoutAlgorithm="no-overlap"
           draggableAccessor={(event: any) => {
             const calendarEvent = event as CalendarEvent;
-            if (calendarEvent.resource.type !== 'study') return false;
 
-            // Check session status - only allow dragging of pending/active sessions
-            const session = calendarEvent.resource.data;
+            // Allow dragging of commitments that count toward daily hours
+            if (calendarEvent.resource.type === 'commitment') {
+              const commitment = calendarEvent.resource.data as FixedCommitment;
+              return commitment.countsTowardDailyHours || false;
+            }
+
+            // Allow dragging of study sessions
             if (calendarEvent.resource.type === 'study') {
+              const session = calendarEvent.resource.data;
               const planDate = calendarEvent.resource.planDate || moment(calendarEvent.start).format('YYYY-MM-DD');
               const sessionStatus = checkSessionStatus(session as StudySession, planDate);
 
@@ -1279,6 +1280,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               return sessionStatus !== 'completed' &&
                      !(session as StudySession).done;
             }
+
             return false;
           }}
           resizable={false}
@@ -1436,10 +1438,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
         }
 
-        /* Non-draggable events (completed, missed, or commitments) */
-        .rbc-event[data-event-type="commitment"]:hover {
-          cursor: default !important;
+        /* Make commitment events draggable when they should be */
+        .rbc-event:hover {
+          cursor: grab !important;
+          transform: scale(1.02) !important;
+          transition: transform 0.1s ease !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Override for non-draggable completed/done sessions */
+        .rbc-event.non-draggable:hover {
+          cursor: not-allowed !important;
           transform: none !important;
+          box-shadow: none !important;
         }
 
         .rbc-event.non-draggable:hover {
@@ -1463,10 +1474,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           display: none !important;
         }
 
-        /* Only allow drag on study sessions */
-        .rbc-event[data-event-type="commitment"] {
-          cursor: default !important;
-        }
+        /* Commitments that count toward daily hours are now draggable */
 
         /* Better visual feedback for valid drop zones */
         .rbc-time-slot.rbc-dnd-over {
