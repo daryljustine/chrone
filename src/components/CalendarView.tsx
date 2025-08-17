@@ -97,7 +97,6 @@ function splitEventIfCrossesMidnight(start: Date, end: Date) {
 const CalendarView: React.FC<CalendarViewProps> = ({
   studyPlans,
   fixedCommitments,
-  smartCommitments = [],
   tasks,
   settings,
   onSelectTask,
@@ -970,7 +969,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       default:
         // For custom categories, try to match common words
         if (categoryLower.includes('study') || categoryLower.includes('school') || categoryLower.includes('class')) {
-          return '📚';
+          return '��';
         } else if (categoryLower.includes('work') || categoryLower.includes('job') || categoryLower.includes('business')) {
           return '💼';
         } else if (categoryLower.includes('health') || categoryLower.includes('medical') || categoryLower.includes('fitness')) {
