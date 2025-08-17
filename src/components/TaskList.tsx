@@ -18,15 +18,9 @@ type EditFormData = Partial<Task> & {
   impact?: string;
   deadlineType?: 'hard' | 'soft' | 'none';
   schedulingPreference?: 'consistent' | 'opportunistic' | 'intensive';
-  sessionDuration?: number; // Preferred session duration in hours
   preferredTimeSlots?: ('morning' | 'afternoon' | 'evening')[];
-  minWorkBlock?: number;
   maxSessionLength?: number;
   isOneTimeTask?: boolean;
-  // Session-based estimation fields
-  estimationMode?: 'total' | 'session';
-  sessionDurationHours?: string;
-  sessionDurationMinutes?: string;
 };
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, autoRemovedTasks = [], onDismissAutoRemovedTask, userSettings }) => {
@@ -118,48 +112,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
 
   // No frequency restrictions needed - using session-based estimation
 
-  // Reset conflicting options when one-sitting task is toggled
-  React.useEffect(() => {
-    if (editFormData.isOneTimeTask) {
-      // One-sitting tasks must use total time estimation
-      setEditFormData(f => ({ ...f, estimationMode: 'total' }));
-    }
-  }, [editFormData.isOneTimeTask]);
 
-  // Calculate total time from session-based estimation
-  const calculateSessionBasedTotal = React.useMemo(() => {
-    if (editFormData.estimationMode !== 'session' || !editFormData.deadline || editFormData.deadlineType === 'none') {
-      return 0;
-    }
 
-    const sessionDuration = parseInt(editFormData.sessionDurationHours || '0') + parseInt(editFormData.sessionDurationMinutes || '0') / 60;
-    if (sessionDuration <= 0) return 0;
-
-    const startDate = new Date(editFormData.startDate || new Date().toISOString().split('T')[0]);
-    const deadlineDate = new Date(editFormData.deadline);
-    const timeDiff = deadlineDate.getTime() - startDate.getTime();
-    const totalDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 to include start day
-
-    // Calculate sessions based on deadline pressure
-    let workDays = 0;
-    const daysUntilDeadline = Math.ceil((new Date(editFormData.deadline).getTime() - new Date(editFormData.startDate || new Date().toISOString().split('T')[0]).getTime()) / (1000 * 60 * 60 * 24));
-
-    if (daysUntilDeadline < 7) {
-      workDays = totalDays; // Daily for urgent deadlines
-    } else if (daysUntilDeadline < 14) {
-      workDays = Math.ceil(totalDays / 2); // Every other day
-    } else {
-      workDays = Math.ceil(totalDays / 3); // Every 2-3 days
-    }
-
-    return sessionDuration * workDays;
-  }, [editFormData.estimationMode, editFormData.sessionDurationHours, editFormData.sessionDurationMinutes, editFormData.deadline, editFormData.deadlineType, editFormData.startDate]);
-
-  // Get effective total time (either direct input or calculated from sessions)
+  // Get effective total time from direct input
   const getEffectiveTotalTime = () => {
-    if (editFormData.estimationMode === 'session') {
-      return calculateSessionBasedTotal;
-    }
     return (editFormData.estimatedHours || 0) + ((editFormData.estimatedMinutes || 0) / 60);
   };
 
@@ -203,13 +159,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
     const taskForCheck = {
       deadline: editFormData.deadline,
       estimatedHours: totalHours,
-      sessionDuration: editFormData.sessionDuration || 2,
       deadlineType: editFormData.deadlineType,
       startDate: editFormData.startDate
     };
 
     return calculateSessionDistribution(taskForCheck, userSettings);
-  }, [editFormData.deadline, editFormData.estimatedHours, editFormData.estimatedMinutes, editFormData.sessionDuration, editFormData.deadlineType, editFormData.startDate, editFormData.estimationMode, editFormData.sessionDurationHours, editFormData.sessionDurationMinutes, calculateSessionBasedTotal, userSettings]);
+  }, [editFormData.deadline, editFormData.estimatedHours, editFormData.estimatedMinutes, editFormData.deadlineType, editFormData.startDate, userSettings]);
 
   const getUrgencyColor = (deadline: string): string => {
     const now = new Date();
@@ -255,19 +210,6 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
-    // Check if task was created with session-based estimation
-    const wasSessionBased = task.preferredSessionDuration && task.preferredSessionDuration > 0;
-    let sessionHours = '';
-    let sessionMinutes = '30';
-    let estimationMode: 'total' | 'session' = 'total';
-
-    if (wasSessionBased) {
-      // Restore session-based estimation with original session duration
-      estimationMode = 'session';
-      const sessionTotalMinutes = Math.round(task.preferredSessionDuration * 60);
-      sessionHours = Math.floor(sessionTotalMinutes / 60).toString();
-      sessionMinutes = (sessionTotalMinutes % 60).toString();
-    }
 
     setEditFormData({
       title: task.title,
@@ -282,15 +224,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
       impact: task.impact || (task.importance ? 'high' : 'low'),
       deadlineType: task.deadlineType || (task.deadline ? 'hard' : 'none'),
       schedulingPreference: task.schedulingPreference || 'consistent',
-      sessionDuration: task.sessionDuration || 2, // Default to 2 hours per session
       preferredTimeSlots: task.preferredTimeSlots || [],
-      minWorkBlock: task.minWorkBlock || 30,
       maxSessionLength: task.maxSessionLength || 2,
       isOneTimeTask: task.isOneTimeTask || false,
       startDate: task.startDate || today,
-      estimationMode: estimationMode,
-      sessionDurationHours: sessionHours,
-      sessionDurationMinutes: sessionMinutes,
     });
     setShowAdvancedOptions(false);
   };
@@ -318,7 +255,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
     }
 
     return true;
-  }, [editFormData, today, userSettings, calculateSessionBasedTotal]);
+  }, [editFormData, today, userSettings]);
 
   const saveEdit = () => {
     if (editingTaskId && isEditFormValid) {
@@ -334,13 +271,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdateTask, onDeleteTask, 
         importance: editFormData.impact === 'high',
         priority: editFormData.impact === 'high', // Add priority field
         // Ensure all advanced fields are properly updated
-        sessionDuration: editFormData.sessionDuration,
         preferredTimeSlots: editFormData.preferredTimeSlots,
-        minWorkBlock: editFormData.minWorkBlock,
         maxSessionLength: editFormData.maxSessionLength,
-        preferredSessionDuration: editFormData.estimationMode === 'session' ?
-          (parseInt(editFormData.sessionDurationHours || '0') + parseInt(editFormData.sessionDurationMinutes || '0') / 60) :
-          undefined,
         isOneTimeTask: editFormData.isOneTimeTask,
         schedulingPreference: editFormData.schedulingPreference,
         startDate: editFormData.startDate || today,
