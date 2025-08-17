@@ -56,23 +56,9 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
   const isDateRangeValid = !formData.recurring || !formData.dateRange.startDate || !formData.dateRange.endDate ||
     formData.dateRange.startDate <= formData.dateRange.endDate;
 
-  // Smart commitment validation
-  const isSmartTitleValid = formData.title.trim().length > 0;
-  const isSmartDaysValid = smartFormData.preferredDays.length > 0;
-  const isSmartTimeRangesValid = smartFormData.preferredTimeRanges.length > 0 &&
-    smartFormData.preferredTimeRanges.every(range => range.start < range.end);
-  const isSmartDurationValid = smartFormData.preferredSessionDuration > 0;
-  const isSmartDateRangeValid = formData.dateRange.startDate && formData.dateRange.endDate &&
-    formData.dateRange.startDate <= formData.dateRange.endDate;
-
-  const isFixedFormValid = isTitleValid && isTitleLengthValid && isDaysValid &&
+  const isFormValid = isTitleValid && isTitleLengthValid && isDaysValid &&
                           isDatesValid && isTimeRangeValid && isLocationValid && isDateRangeValid &&
                           (formData.isAllDay || (isStartTimeValid && isEndTimeValid));
-
-  const isSmartFormValid = isSmartTitleValid && isSmartDaysValid &&
-                          isSmartTimeRangesValid && isSmartDurationValid && isSmartDateRangeValid;
-
-  const isFormValid = commitmentType === 'smart' ? isSmartFormValid : isFixedFormValid;
 
 
 
