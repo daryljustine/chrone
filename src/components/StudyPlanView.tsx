@@ -27,14 +27,14 @@ if (typeof window !== 'undefined') {
 }
 
 // Helper function to get commitments that count toward daily hours for a specific date
-const getCommitmentsForDate = (date: string, fixedCommitments: FixedCommitment[], smartCommitments: SmartCommitment[] = []): Array<{
+const getCommitmentsForDate = (date: string, fixedCommitments: FixedCommitment[]): Array<{
   id: string;
   title: string;
   startTime: string;
   endTime: string;
   duration: number;
   category: string;
-  type: 'fixed' | 'smart';
+  type: 'fixed';
   isAllDay?: boolean;
 }> => {
   const targetDate = new Date(date);
