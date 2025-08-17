@@ -1399,10 +1399,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
         }
 
-        /* Non-draggable events (completed, missed, or commitments) */
-        .rbc-event[data-event-type="commitment"]:hover {
+        /* Non-draggable events (completed, missed, or non-productive commitments) */
+        .rbc-event[data-event-type="commitment"]:not([data-draggable="true"]):hover {
           cursor: default !important;
           transform: none !important;
+        }
+
+        /* Draggable productive commitments */
+        .rbc-event[data-event-type="commitment"][data-draggable="true"]:hover {
+          cursor: grab !important;
+          transform: scale(1.02) !important;
+          transition: transform 0.1s ease !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
         }
 
         .rbc-event.non-draggable:hover {
