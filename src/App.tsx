@@ -2567,8 +2567,7 @@ function App() {
                         <div className="space-y-4 sm:space-y-6">
                             <FixedCommitmentInput
                                 onAddCommitment={handleAddFixedCommitment}
-                                onAddSmartCommitment={handleAddSmartCommitment}
-                                existingCommitments={[...fixedCommitments, ...smartCommitments]}
+                                existingCommitments={fixedCommitments}
                                 settings={settings}
                                 existingPlans={studyPlans}
                             />
@@ -2579,18 +2578,10 @@ function App() {
                                     onUpdateCommitment={handleUpdateFixedCommitment}
                                     onCancel={() => setEditingCommitment(null)}
                                 />
-                            ) : editingSmartCommitment ? (
-                                <SmartCommitmentEdit
-                                    commitment={editingSmartCommitment}
-                                    settings={settings}
-                                    onUpdateCommitment={handleUpdateSmartCommitment}
-                                    onCancel={() => setEditingSmartCommitment(null)}
-                                />
                             ) : (
                                 <CommitmentsList
-                                    commitments={[...fixedCommitments, ...smartCommitments]}
+                                    commitments={fixedCommitments}
                                     onEditCommitment={setEditingCommitment}
-                                    onEditSmartCommitment={setEditingSmartCommitment}
                                     onDeleteCommitment={handleDeleteCommitment}
                                 />
                             )}
