@@ -109,34 +109,6 @@ const getCommitmentsForDate = (date: string, fixedCommitments: FixedCommitment[]
     }
   });
 
-  // Process smart commitments
-  smartCommitments.forEach(commitment => {
-    // Only include commitments that count toward daily hours
-    if (!commitment.countsTowardDailyHours) return;
-
-    // Find sessions for this date
-    const sessionsForDate = commitment.suggestedSessions.filter(session => session.date === date);
-
-    sessionsForDate.forEach((session, index) => {
-      // Check if this session has been manually overridden
-      const override = commitment.manualOverrides?.[date];
-
-      if (!override?.isDeleted) {
-        const startTime = override?.startTime || session.startTime;
-        const endTime = override?.endTime || session.endTime;
-
-        commitmentSessions.push({
-          id: `${commitment.id}-${index}`,
-          title: commitment.title,
-          startTime,
-          endTime,
-          duration: session.duration,
-          category: commitment.category,
-          type: 'smart'
-        });
-      }
-    });
-  });
 
   return commitmentSessions;
 };
