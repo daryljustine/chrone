@@ -254,7 +254,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
         </div>
 
 
-        {commitmentType !== 'smart' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">
@@ -284,9 +283,7 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
               </div>
             </div>
           </div>
-        )}
 
-        {commitmentType !== 'smart' && (
           <div className="mb-4">
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-200">
               <input
@@ -298,9 +295,8 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
               <span>All-day event (no specific time)</span>
             </label>
           </div>
-        )}
 
-        {commitmentType !== 'smart' && !formData.isAllDay && (
+        {!formData.isAllDay && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">
