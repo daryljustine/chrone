@@ -657,7 +657,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                   const sessionStatus = checkSessionStatus(session, todaysPlan.date);
                   return sessionStatus !== 'missed' && session.status !== 'skipped';
                 }).reduce((sum, session) => sum + session.allocatedHours, 0);
-                const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments, smartCommitments);
+                const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments);
                 const totalPlannedHours = taskHours + committedHours;
                 const remainingHours = Math.max(0, settings.dailyAvailableHours - totalPlannedHours);
 
@@ -726,7 +726,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                     const sessionStatus = checkSessionStatus(session, todaysPlan.date);
                     return sessionStatus !== 'missed' && session.status !== 'skipped';
                   }).reduce((sum, session) => sum + session.allocatedHours, 0);
-                  const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments, smartCommitments);
+                  const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments);
                   const totalPlannedHours = taskHours + committedHours;
 
                   return (
@@ -752,7 +752,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                         const sessionStatus = checkSessionStatus(session, todaysPlan.date);
                         return sessionStatus !== 'missed' && session.status !== 'skipped';
                       }).reduce((sum, session) => sum + session.allocatedHours, 0);
-                      const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments, smartCommitments);
+                      const committedHours = calculateCommittedHoursForDate(todaysPlan.date, fixedCommitments);
                       const totalHours = taskHours + committedHours;
                       return `${formatTime(totalHours)} / ${formatTime(settings.dailyAvailableHours)} total hours`;
                     })()})
@@ -991,7 +991,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
 
           {/* Display commitments that count toward daily hours */}
           {(() => {
-            const todaysCommitments = getCommitmentsForDate(todaysPlan.date, fixedCommitments, smartCommitments);
+            const todaysCommitments = getCommitmentsForDate(todaysPlan.date, fixedCommitments);
             return todaysCommitments.map((commitment) => (
               <div
                 key={`commitment-${commitment.id}`}
@@ -1046,7 +1046,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
           })()}
 
           {/* Show "No Sessions Planned" message when all sessions and commitments are filtered out */}
-          {todaysPlan.plannedTasks.filter(session => session.status !== 'skipped').length === 0 && getCommitmentsForDate(todaysPlan.date, fixedCommitments, smartCommitments).length === 0 && (
+          {todaysPlan.plannedTasks.filter(session => session.status !== 'skipped').length === 0 && getCommitmentsForDate(todaysPlan.date, fixedCommitments).length === 0 && (
             <div className="text-center py-8">
               <div className="text-4xl mb-4">📚</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2 dark:text-white">No Sessions Planned</h3>
@@ -1102,7 +1102,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                             .reduce((sum, session) => sum + session.allocatedHours, 0);
 
                           // Calculate commitment hours for this date
-                          const commitmentHours = calculateCommittedHoursForDate(plan.date, fixedCommitments, smartCommitments);
+                          const commitmentHours = calculateCommittedHoursForDate(plan.date, fixedCommitments);
 
                           const totalHours = taskHours + commitmentHours;
                           return formatTime(totalHours);
@@ -1178,7 +1178,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
 
                     {/* Display commitments that count toward daily hours for upcoming dates */}
                     {(() => {
-                      const upcomingCommitments = getCommitmentsForDate(plan.date, fixedCommitments, smartCommitments);
+                      const upcomingCommitments = getCommitmentsForDate(plan.date, fixedCommitments);
                       return upcomingCommitments.map((commitment) => (
                         <div
                           key={`upcoming-commitment-${commitment.id}`}
@@ -1204,7 +1204,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                           </div>
                           <div className="flex items-center space-x-2 text-xs text-blue-600 dark:text-blue-400">
                             <span>{commitment.startTime} - {commitment.endTime}</span>
-                            <span>•</span>
+                            <span>��</span>
                             <span>{formatTime(commitment.duration)}</span>
                           </div>
                         </div>
