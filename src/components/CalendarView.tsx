@@ -1224,11 +1224,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           dayLayoutAlgorithm="no-overlap"
           draggableAccessor={(event: any) => {
             const calendarEvent = event as CalendarEvent;
-            if (calendarEvent.resource.type !== 'study') return false;
 
-            // Check session status - only allow dragging of pending/active sessions
-            const session = calendarEvent.resource.data;
+            // Allow dragging of commitments that count toward daily hours
+            if (calendarEvent.resource.type === 'commitment') {
+              const commitment = calendarEvent.resource.data as FixedCommitment;
+              return commitment.countsTowardDailyHours || false;
+            }
+
+            // Allow dragging of study sessions
             if (calendarEvent.resource.type === 'study') {
+              const session = calendarEvent.resource.data;
               const planDate = calendarEvent.resource.planDate || moment(calendarEvent.start).format('YYYY-MM-DD');
               const sessionStatus = checkSessionStatus(session as StudySession, planDate);
 
@@ -1236,6 +1241,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               return sessionStatus !== 'completed' &&
                      !(session as StudySession).done;
             }
+
             return false;
           }}
           resizable={false}
