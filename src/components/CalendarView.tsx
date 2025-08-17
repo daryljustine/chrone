@@ -423,48 +423,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       }
     });
 
-    // Convert smart commitments to calendar events
-    smartCommitments.forEach(commitment => {
-      commitment.suggestedSessions.forEach((session, sessionIndex) => {
-        // Check if this session has been manually deleted
-        if (commitment.manualOverrides?.[session.date]?.isDeleted) {
-          return;
-        }
-
-        // Apply manual overrides if they exist
-        const override = commitment.manualOverrides?.[session.date];
-        const startTime = override?.startTime || session.startTime;
-        const endTime = override?.endTime || session.endTime;
-
-        const startDateTime = new Date(session.date);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        startDateTime.setHours(startHour, startMinute, 0, 0);
-
-        const endDateTime = new Date(session.date);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-        endDateTime.setHours(endHour, endMinute, 0, 0);
-
-        // Split if crosses midnight
-        splitEventIfCrossesMidnight(startDateTime, endDateTime).forEach(({ start, end }, idx) => {
-          const uniqueId = `smart-commitment-${commitment.id}-${session.date}-${sessionIndex}-${startTime.replace(':', '')}-${idx}`;
-          calendarEvents.push({
-            id: uniqueId,
-            title: commitment.title,
-            start,
-            end,
-            resource: {
-              type: 'smart-commitment',
-              data: commitment,
-              commitmentType: 'smart',
-              isPattern: true
-            }
-          });
-        });
-      });
-    });
-
     return calendarEvents;
-  }, [studyPlans, fixedCommitments, smartCommitments, tasks]);
+  }, [studyPlans, fixedCommitments, tasks]);
 
   // Get all unique task categories
   const taskCategories = Array.from(new Set(tasks.map(t => t.category).filter((v): v is string => !!v)));
