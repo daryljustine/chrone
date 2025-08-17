@@ -875,21 +875,9 @@ function App() {
 
     // Helper function to get all commitments in format expected by scheduling functions
     const getAllCommitmentsForScheduling = (): FixedCommitment[] => {
-        const convertedSmartCommitments = convertSmartCommitmentsToFixedFormat(smartCommitments);
-        return [...fixedCommitments, ...convertedSmartCommitments];
+        return fixedCommitments;
     };
 
-    const handleAddSmartCommitment = async (commitmentData: Omit<SmartCommitment, 'id' | 'createdAt'>) => {
-        const newCommitment: SmartCommitment = {
-            ...commitmentData,
-            id: Date.now().toString(),
-            createdAt: new Date().toISOString()
-        };
-
-        setSmartCommitments(prev => [...prev, newCommitment]);
-        setLastPlanStaleReason("commitment");
-        setIsPlanStale(true);
-    };
 
     const handleAddFixedCommitment = async (commitmentData: Omit<FixedCommitment, 'id' | 'createdAt'>) => {
         const newCommitment: FixedCommitment = {
