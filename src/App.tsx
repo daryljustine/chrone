@@ -2503,7 +2503,6 @@ function App() {
                         <CalendarView
                             studyPlans={studyPlans}
                             fixedCommitments={fixedCommitments}
-                            smartCommitments={smartCommitments}
                             tasks={tasks}
                             settings={settings}
                             onSelectTask={handleSelectTask}
