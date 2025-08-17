@@ -104,6 +104,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onSelectCommitment,
   onStartManualSession,
   onDeleteFixedCommitment,
+  onUpdateCommitment,
   onUpdateStudyPlans,
 }) => {
   const [timeInterval, setTimeInterval] = useState(() => {
