@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Clock, MapPin, User, AlertTriangle, Calendar, Brain, Settings, Zap } from 'lucide-react';
-import { FixedCommitment, SmartCommitment, TimeRange, UserSettings, StudyPlan } from '../types';
+import { FixedCommitment, TimeRange, UserSettings, StudyPlan } from '../types';
 import { checkCommitmentConflicts } from '../utils/scheduling';
-import { generateSmartCommitmentSchedule } from '../utils/smart-commitment-scheduling';
 
 // Utility function to convert hour number to HH:MM format
 const formatHour = (hour: number): string => {
@@ -11,21 +10,19 @@ const formatHour = (hour: number): string => {
 
 interface FixedCommitmentInputProps {
   onAddCommitment: (commitment: Omit<FixedCommitment, 'id' | 'createdAt'>) => void;
-  onAddSmartCommitment: (commitment: Omit<SmartCommitment, 'id' | 'createdAt'>) => void;
-  existingCommitments: (FixedCommitment | SmartCommitment)[];
+  existingCommitments: FixedCommitment[];
   settings: UserSettings;
   existingPlans: StudyPlan[];
 }
 
 const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
   onAddCommitment,
-  onAddSmartCommitment,
   existingCommitments,
   settings,
   existingPlans
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [commitmentType, setCommitmentType] = useState<'fixed' | 'smart' | 'one-time'>('fixed');
+  const [commitmentType, setCommitmentType] = useState<'fixed' | 'one-time'>('fixed');
   const [formData, setFormData] = useState({
     title: '',
     startTime: '',
