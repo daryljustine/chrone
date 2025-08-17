@@ -186,7 +186,7 @@ export interface FixedCommitment {
 }
 
 // Union type for all commitment types
-export type Commitment = FixedCommitment | SmartCommitment;
+export type Commitment = FixedCommitment;
 
 export interface CalendarEvent {
   id: string;
