@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, CheckSquare, Clock, Settings as SettingsIcon, BarChart3, CalendarDays, Lightbulb, Edit, Trash2, Menu, X, HelpCircle, Trophy, User } from 'lucide-react';
-import { Task, StudyPlan, UserSettings, FixedCommitment, SmartCommitment, Commitment, StudySession, TimerState } from './types';
+import { Task, StudyPlan, UserSettings, FixedCommitment, Commitment, StudySession, TimerState } from './types';
 import { GamificationData, Achievement, DailyChallenge, MotivationalMessage } from './types-gamification';
 import { getUnscheduledMinutesForTasks, getLocalDateString, checkCommitmentConflicts, generateNewStudyPlan, generateNewStudyPlanWithPreservation, reshuffleStudyPlan, markPastSessionsAsSkipped } from './utils/scheduling';
 import { getAccurateUnscheduledTasks, shouldShowNotifications, getNotificationPriority } from './utils/enhanced-notifications';
-import { convertSmartCommitmentsToFixedFormat } from './utils/smart-commitment-integration';
-import { generateSmartCommitmentSchedule } from './utils/smart-commitment-scheduling';
 import { enhancedEstimationTracker } from './utils/enhanced-estimation-tracker';
 import {
   ACHIEVEMENTS,
@@ -26,7 +24,6 @@ import Settings from './components/Settings';
 import CalendarView from './components/CalendarView';
 import FixedCommitmentInput from './components/FixedCommitmentInput';
 import FixedCommitmentEdit from './components/FixedCommitmentEdit';
-import SmartCommitmentEdit from './components/SmartCommitmentEdit';
 import CommitmentsList from './components/CommitmentsList';
 import GamificationPanel from './components/GamificationPanel';
 import AchievementNotification, { MotivationalToast } from './components/AchievementNotification';
@@ -49,7 +46,6 @@ function App() {
     const [currentTask, setCurrentTask] = useState<Task | null>(null);
     const [currentSession, setCurrentSession] = useState<{ allocatedHours: number; planDate?: string; sessionNumber?: number } | null>(null);
     const [fixedCommitments, setFixedCommitments] = useState<FixedCommitment[]>([]);
-    const [smartCommitments, setSmartCommitments] = useState<SmartCommitment[]>([]);
     const [settings, setSettings] = useState<UserSettings>({
         dailyAvailableHours: 6,
         workDays: [0, 1, 2, 3, 4, 5, 6],
@@ -78,7 +74,6 @@ function App() {
     // Add state to track last-timed session and ready-to-mark-done
     const [lastTimedSession, setLastTimedSession] = useState<{ planDate: string; sessionNumber: number } | null>(null);
     const [editingCommitment, setEditingCommitment] = useState<FixedCommitment | null>(null);
-    const [editingSmartCommitment, setEditingSmartCommitment] = useState<SmartCommitment | null>(null);
 
     // Global timer state that persists across tab switches
     const [globalTimer, setGlobalTimer] = useState<TimerState>({
