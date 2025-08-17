@@ -162,7 +162,7 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
     <div className="bg-white rounded-xl shadow-lg p-6 dark:bg-gray-900 dark:shadow-gray-900">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Add {commitmentType === 'smart' ? 'Smart' : 'Fixed'} Commitment
+          Add Commitment
         </h2>
         <button
           onClick={() => setIsOpen(!isOpen)}
