@@ -332,7 +332,7 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
           </div>
         )}
 
-                  {commitmentType !== 'smart' && formData.recurring ? (
+                  {formData.recurring ? (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-200">
