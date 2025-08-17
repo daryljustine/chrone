@@ -554,7 +554,7 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
             >
               <Plus size={20} />
               <span>
-                {commitmentType === 'smart' ? 'Add Smart Commitment' : 'Add Commitment'}
+                Add Commitment
               </span>
             </button>
             <button
