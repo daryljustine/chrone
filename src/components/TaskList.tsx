@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BookOpen, Edit, Trash2, CheckCircle2, X, Info, ChevronDown, ChevronUp, HelpCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { BookOpen, Edit, Trash2, CheckCircle2, X, Info, ChevronDown, ChevronUp, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Task, UserSettings } from '../types';
 import { formatTime, calculateSessionDistribution } from '../utils/scheduling';
 
