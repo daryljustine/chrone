@@ -1180,11 +1180,7 @@ const StudyPlanView: React.FC<StudyPlanViewProps> = ({ studyPlans, tasks, fixedC
                         >
                           <div className="flex items-center space-x-2">
                             <div className="flex items-center space-x-1">
-                              {commitment.type === 'smart' ? (
-                                <Brain className="text-blue-600 dark:text-blue-400" size={14} />
-                              ) : (
-                                <Settings className="text-blue-600 dark:text-blue-400" size={14} />
-                              )}
+                              <Settings className="text-blue-600 dark:text-blue-400" size={14} />
                               <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                                 {commitment.title}
                               </span>
