@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Clock, MapPin, User, AlertTriangle, Calendar } from 'lucide-react';
-import { FixedCommitment, TimeRange, UserSettings, StudyPlan } from '../types';
+import { FixedCommitment, UserSettings, StudyPlan } from '../types';
 import { checkCommitmentConflicts } from '../utils/scheduling';
 
 // Utility function to convert hour number to HH:MM format
