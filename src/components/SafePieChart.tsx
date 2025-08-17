@@ -4,8 +4,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 const loadRecharts = () => {
   try {
     // Ensure React is available in the global context for recharts
-    if (typeof window !== 'undefined' && !window.React) {
-      window.React = React;
+    if (typeof window !== 'undefined' && React) {
+      (window as any).React = React;
     }
     return import('recharts');
   } catch (error) {
