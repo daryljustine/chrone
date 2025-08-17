@@ -649,13 +649,50 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         return;
       }
 
+      if (!onUpdateCommitment) {
+        setDragFeedback('Commitment updates not available');
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      const targetDate = moment(start).format('YYYY-MM-DD');
       const newStartTime = moment(start).format('HH:mm');
       const newEndTime = moment(end).format('HH:mm');
 
-      // For now, just show feedback that the commitment would be moved
-      // In a full implementation, this would need a proper callback to update the commitment
-      setDragFeedback(`Commitment "${commitment.title}" would move to ${newStartTime} - ${newEndTime}. Edit the commitment to change its time.`);
-      setTimeout(() => setDragFeedback(''), 4000);
+      // For one-time commitments, update the specific date
+      if (!commitment.recurring && commitment.specificDates?.includes(targetDate)) {
+        onUpdateCommitment(commitment.id, {
+          startTime: newStartTime,
+          endTime: newEndTime
+        });
+        setDragFeedback(`✅ Commitment moved to ${newStartTime} - ${newEndTime}`);
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      // For recurring commitments, create a modified occurrence for this specific date
+      if (commitment.recurring) {
+        const updatedModifiedOccurrences = {
+          ...commitment.modifiedOccurrences,
+          [targetDate]: {
+            startTime: newStartTime,
+            endTime: newEndTime,
+            title: commitment.title,
+            isAllDay: false
+          }
+        };
+
+        onUpdateCommitment(commitment.id, {
+          modifiedOccurrences: updatedModifiedOccurrences
+        });
+
+        setDragFeedback(`✅ Commitment moved to ${newStartTime} - ${newEndTime} on ${moment(targetDate).format('MMM D')}`);
+        setTimeout(() => setDragFeedback(''), 3000);
+        return;
+      }
+
+      setDragFeedback('Unable to update this commitment type');
+      setTimeout(() => setDragFeedback(''), 3000);
       return;
     }
 
