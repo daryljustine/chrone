@@ -1435,10 +1435,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           display: none !important;
         }
 
-        /* Only allow drag on study sessions */
-        .rbc-event[data-event-type="commitment"] {
-          cursor: default !important;
-        }
+        /* Commitments that count toward daily hours are now draggable */
 
         /* Better visual feedback for valid drop zones */
         .rbc-time-slot.rbc-dnd-over {
