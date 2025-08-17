@@ -170,23 +170,6 @@ const calculateCommittedHoursForDate = (date: string, fixedCommitments: FixedCom
     }
   });
 
-  // Process smart commitments
-  smartCommitments.forEach(commitment => {
-    // Only count commitments that count toward daily hours
-    if (!commitment.countsTowardDailyHours) return;
-
-    // Find sessions for this date
-    const sessionsForDate = commitment.suggestedSessions.filter(session => session.date === date);
-
-    sessionsForDate.forEach((session) => {
-      // Check if this session has been manually overridden
-      const override = commitment.manualOverrides?.[date];
-
-      if (!override?.isDeleted) {
-        totalCommittedHours += session.duration;
-      }
-    });
-  });
 
   return totalCommittedHours;
 };
