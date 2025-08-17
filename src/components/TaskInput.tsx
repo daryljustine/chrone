@@ -266,42 +266,6 @@ const TaskInput: React.FC<TaskInputProps> = ({ onAddTask, onCancel, userSettings
   // Handle category custom
   const showCustomCategory = formData.category === 'Custom...';
 
-  // Calculate smart session distribution based on deadline pressure
-  const sessionDistribution = useMemo(() => {
-    if (!formData.deadline || formData.deadlineType === 'none') {
-      return {
-        suggestedFrequency: 'relaxed',
-        description: 'Sessions will be distributed based on available time slots',
-        sessions: sessionCalculation.estimatedSessions
-      };
-    }
-
-    const startDate = new Date(formData.startDate || new Date().toISOString().split('T')[0]);
-    const deadlineDate = new Date(formData.deadline);
-    const timeDiff = deadlineDate.getTime() - startDate.getTime();
-    const daysUntilDeadline = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-    let suggestedFrequency;
-    let description;
-
-    if (daysUntilDeadline < 7) {
-      suggestedFrequency = 'urgent';
-      description = 'Daily sessions recommended due to urgent deadline';
-    } else if (daysUntilDeadline < 14) {
-      suggestedFrequency = 'moderate';
-      description = 'Every other day sessions recommended';
-    } else {
-      suggestedFrequency = 'relaxed';
-      description = '2-3 sessions per week recommended';
-    }
-
-    return {
-      suggestedFrequency,
-      description,
-      sessions: sessionCalculation.estimatedSessions,
-      daysAvailable: daysUntilDeadline
-    };
-  }, [formData.deadline, formData.deadlineType, formData.startDate, sessionCalculation]);
 
   // Enhanced validation with better error messages
   const isTitleValid = formData.title.trim().length > 0;
