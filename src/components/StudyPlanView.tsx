@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, BookOpen, TrendingUp, AlertTriangle, CheckCircle, Lightbulb, X, CheckCircle2, Clock3, Brain, Settings } from 'lucide-react';
+import { Calendar, Clock, BookOpen, TrendingUp, AlertTriangle, CheckCircle, Lightbulb, X, CheckCircle2, Clock3, Settings } from 'lucide-react';
 import { StudyPlan, Task, StudySession, FixedCommitment, UserSettings } from '../types';
 import { formatTime, generateSmartSuggestions, getLocalDateString, checkSessionStatus, moveIndividualSession, isTaskDeadlinePast } from '../utils/scheduling';
 
