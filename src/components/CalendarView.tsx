@@ -24,6 +24,7 @@ interface CalendarViewProps {
   onSelectCommitment?: (commitment: FixedCommitment, duration: number) => void;
   onStartManualSession?: (commitment: FixedCommitment, durationSeconds: number) => void;
   onDeleteFixedCommitment?: (commitmentId: string) => void;
+  onUpdateCommitment?: (commitmentId: string, updates: Partial<FixedCommitment>) => void;
   onUpdateStudyPlans?: (updatedPlans: StudyPlan[]) => void;
 }
 
@@ -930,7 +931,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       default:
         // For custom categories, try to match common words
         if (categoryLower.includes('study') || categoryLower.includes('school') || categoryLower.includes('class')) {
-          return '��';
+          return '���';
         } else if (categoryLower.includes('work') || categoryLower.includes('job') || categoryLower.includes('business')) {
           return '💼';
         } else if (categoryLower.includes('health') || categoryLower.includes('medical') || categoryLower.includes('fitness')) {
