@@ -72,35 +72,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
     { value: 0, label: 'Sun' }
   ];
 
-  const handleGeneratePreview = () => {
-    if (!isSmartFormValid) return;
-
-    // Calculate total hours per week based on session duration and frequency
-    const sessionsPerWeek = smartFormData.preferredDays.length * smartFormData.preferredTimeRanges.length;
-    const totalHoursPerWeek = (smartFormData.preferredSessionDuration / 60) * sessionsPerWeek;
-
-    const smartCommitmentData = {
-      title: formData.title,
-      type: 'smart' as const,
-      category: formData.category,
-      location: formData.location,
-      description: formData.description,
-      totalHoursPerWeek: totalHoursPerWeek,
-      preferredDays: smartFormData.preferredDays,
-      preferredTimeRanges: smartFormData.preferredTimeRanges,
-      sessionDurationRange: { min: smartFormData.preferredSessionDuration, max: smartFormData.preferredSessionDuration },
-      allowTimeShifting: smartFormData.allowTimeShifting,
-      priorityLevel: smartFormData.priorityLevel,
-      suggestedSessions: [],
-      isConfirmed: false,
-      dateRange: formData.dateRange,
-      countsTowardDailyHours: formData.countsTowardDailyHours
-    };
-
-    const sessions = generateSmartCommitmentSchedule(smartCommitmentData, settings, existingCommitments, existingPlans);
-    setSuggestedSessions(sessions);
-    setShowPreview(true);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
