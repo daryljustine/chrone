@@ -41,20 +41,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
     }
   });
 
-  // Smart commitment specific state
-  const [smartFormData, setSmartFormData] = useState({
-    preferredSessionDuration: 60, // consistent session duration in minutes
-    preferredDays: [] as number[],
-    preferredTimeRanges: [{
-      start: formatHour(settings.studyWindowStartHour),
-      end: formatHour(settings.studyWindowEndHour)
-    }] as TimeRange[],
-    allowTimeShifting: true,
-    priorityLevel: 'standard' as 'important' | 'standard'
-  });
-
-  const [suggestedSessions, setSuggestedSessions] = useState<any[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
 
   // Enhanced validation for fixed commitments
