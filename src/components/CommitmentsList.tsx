@@ -221,21 +221,12 @@ const CommitmentsList: React.FC<CommitmentsListProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="flex items-center space-x-2">
-                      {commitment.type === 'smart' ? (
-                        <Brain className="text-purple-500" size={18} title="Smart Commitment" />
-                      ) : (
-                        <Settings className="text-gray-500" size={18} title="Fixed Commitment" />
-                      )}
+                      <Settings className="text-gray-500" size={18} title="Fixed Commitment" />
                       <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white truncate">
                         {commitment.title}
                       </h3>
                     </div>
                     <div className="flex items-center space-x-2 flex-shrink-0">
-                      {commitment.type === 'smart' && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                          🧠 Smart
-                        </span>
-                      )}
                       <span
                         className={`px-2 sm:px-3 py-1 text-xs font-medium rounded-full ${getCategoryColor(
                           commitment.category
