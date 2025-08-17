@@ -156,37 +156,6 @@ const FixedCommitmentInput: React.FC<FixedCommitmentInputProps> = ({
     }));
   };
 
-  const handleSmartDayToggle = (day: number) => {
-    setSmartFormData(prev => ({
-      ...prev,
-      preferredDays: prev.preferredDays.includes(day)
-        ? prev.preferredDays.filter(d => d !== day)
-        : [...prev.preferredDays, day].sort()
-    }));
-  };
-
-  const handleTimeRangeChange = (index: number, field: 'start' | 'end', value: string) => {
-    setSmartFormData(prev => ({
-      ...prev,
-      preferredTimeRanges: prev.preferredTimeRanges.map((range, i) =>
-        i === index ? { ...range, [field]: value } : range
-      )
-    }));
-  };
-
-  const addTimeRange = () => {
-    setSmartFormData(prev => ({
-      ...prev,
-      preferredTimeRanges: [...prev.preferredTimeRanges, { start: '09:00', end: '17:00' }]
-    }));
-  };
-
-  const removeTimeRange = (index: number) => {
-    setSmartFormData(prev => ({
-      ...prev,
-      preferredTimeRanges: prev.preferredTimeRanges.filter((_, i) => i !== index)
-    }));
-  };
 
 
   return (
