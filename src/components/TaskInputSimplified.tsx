@@ -29,10 +29,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     startDate: new Date().toISOString().split('T')[0],
     // Simplified estimation fields
     totalTimeNeeded: '',
-    // Temporary: keep these to prevent runtime errors until UI is cleaned up
-    estimationMode: 'total' as 'total' | 'session',
-    sessionDurationHours: '',
-    sessionDurationMinutes: '30',
   });
 
   const [showTimeEstimationModal, setShowTimeEstimationModal] = useState(false);
@@ -87,10 +83,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
     return parseInt(hours || '0') + parseInt(minutes || '0') / 60;
   };
 
-  // Temporary: minimal function to prevent runtime errors
-  const calculateSessionBasedTotal = useMemo(() => {
-    return 0; // Always return 0 since we're not using this anymore
-  }, []);
 
   // Get effective total time (use totalTimeNeeded if provided, otherwise estimatedHours+Minutes)
   const getEffectiveTotalTime = () => {
@@ -119,17 +111,31 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       };
     }
 
-    return calculateSessionDistribution(
-      {
-        deadline: formData.deadline,
-        estimatedHours: effectiveTime,
-        sessionDuration: formData.sessionDuration || 2,
-        deadlineType: formData.deadlineType,
-        startDate: formData.startDate
-      },
-      userSettings
-    );
-  }, [formData.sessionDuration, formData.deadline, formData.deadlineType, formData.startDate, formData.isOneTimeTask, getEffectiveTotalTime(), userSettings, today]);
+    // Simple description based on deadline urgency
+    const startDate = new Date(formData.startDate || today);
+    const deadlineDate = new Date(formData.deadline);
+    const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilDeadline < 7) {
+      return {
+        suggestedFrequency: 'urgent' as const,
+        description: 'Urgent deadline - daily sessions recommended',
+        estimatedSessions: Math.ceil(effectiveTime / 2) // Assume 2h sessions
+      };
+    } else if (daysUntilDeadline < 14) {
+      return {
+        suggestedFrequency: 'moderate' as const,
+        description: 'Moderate timeline - every other day sessions',
+        estimatedSessions: Math.ceil(effectiveTime / 2)
+      };
+    } else {
+      return {
+        suggestedFrequency: 'relaxed' as const,
+        description: '2-3 sessions per week recommended',
+        estimatedSessions: Math.ceil(effectiveTime / 2)
+      };
+    }
+  }, [formData.deadline, formData.deadlineType, formData.startDate, formData.isOneTimeTask, getEffectiveTotalTime(), today]);
 
   // Show custom category input when "Custom..." is selected
   const showCustomCategory = formData.category === 'Custom...';
@@ -244,6 +250,7 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       totalTimeNeeded: formData.totalTimeNeeded ? parseFloat(formData.totalTimeNeeded) : undefined,
       isOneTimeTask: formData.isOneTimeTask,
       startDate: formData.startDate || today,
+      maxSessionLength: 2, // Default max session length
     });
     setShowValidationErrors(false);
     // Reset form
@@ -262,10 +269,6 @@ const TaskInputSimplified: React.FC<TaskInputProps> = ({ onAddTask, onCancel, us
       isOneTimeTask: false,
       startDate: today,
       totalTimeNeeded: '',
-      // Temporary: keep these until UI cleanup is complete
-      estimationMode: 'total',
-      sessionDurationHours: '',
-      sessionDurationMinutes: '30',
     });
     // Hide the form after successful submission
     onCancel?.();
