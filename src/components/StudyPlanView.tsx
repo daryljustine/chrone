@@ -46,7 +46,7 @@ const getCommitmentsForDate = (date: string, fixedCommitments: FixedCommitment[]
     endTime: string;
     duration: number;
     category: string;
-    type: 'fixed' | 'smart';
+    type: 'fixed';
     isAllDay?: boolean;
   }> = [];
 
