@@ -115,6 +115,15 @@ const SafePieChart: React.FC<SafePieChartProps> = ({
   formatter,
   tooltipStyle
 }) => {
+  // Ensure React context is available before using hooks
+  if (!React || typeof React.useState !== 'function') {
+    return (
+      <div className="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+        <span className="text-gray-500 dark:text-gray-400 text-xs">Loading...</span>
+      </div>
+    );
+  }
+
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
