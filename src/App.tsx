@@ -2530,6 +2530,7 @@ function App() {
                                 setActiveTab('timer');
                             }}
                             onDeleteFixedCommitment={handleDeleteCommitment}
+                            onUpdateCommitment={handleUpdateFixedCommitment}
                             onUpdateStudyPlans={setStudyPlans}
                         />
                     )}
